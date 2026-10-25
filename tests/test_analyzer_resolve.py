@@ -22,3 +22,11 @@ except ValueError:
 finally:
     os.environ["LOCAL_ANALYZER_MODEL_ID"] = saved
 print("analyzer-resolve OK: local preset, alias preset, direct id, missing-id error")
+
+import importlib
+os.environ["LOCAL_ANALYZER_PROVIDER"] = "llamacpp"
+os.environ["OPENAI_BASE_URL"] = "http://10.0.0.9:8080/v1"
+c4 = _resolve_analyzer_model("custom-id")
+assert c4.base_url == "http://10.0.0.9:8080/v1" and c4.model_id == "custom-id", c4
+assert c4.provider == "llamacpp", c4
+print("provider-passthrough OK: custom provider preserved, OPENAI_* alias route works")

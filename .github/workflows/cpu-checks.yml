@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -q requests
+      - run: pip install -q requests pillow numpy
       - name: overlay patched tree on stock and test model resolution
         run: |
           rm -rf /tmp/merged && cp -r src-stock/ARC3-Inference /tmp/merged

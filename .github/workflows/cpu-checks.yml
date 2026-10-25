@@ -33,6 +33,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -q requests
-      - name: analyzer model resolution (local path)
+      - name: overlay patched tree on stock and test model resolution
         run: |
-          python3 tests/test_analyzer_resolve.py
+          rm -rf /tmp/merged && cp -r src-stock/ARC3-Inference /tmp/merged
+          cp -r src-patched/ARC3-Inference/* /tmp/merged/
+          PYTHONPATH=/tmp/merged python3 -m py_compile $(find /tmp/merged tests -name '*.py')
+          sed 's#src-patched/ARC3-Inference#/tmp/merged#' tests/test_analyzer_resolve.py > /tmp/test_resolve.py
+          PYTHONPATH=/tmp/merged python3 /tmp/test_resolve.py

@@ -1,0 +1,42 @@
+name: cpu-checks
+on:
+  pull_request:
+  push:
+jobs:
+  patch-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: patch applies to upstream snapshot
+        run: |
+          git clone --depth 1 https://github.com/Tufalabs/duck-harness.git /tmp/duck-upstream || exit 1
+          cp harness.patch /tmp/duck-upstream/ || exit 1
+          cd /tmp/duck-upstream && git apply --check harness.patch
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: everything compiles
+        run: |
+          python3 -m py_compile $(find src-patched tests -name '*.py')
+  resolve-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q requests pillow numpy
+      - name: overlay patched tree on stock and test model resolution
+        run: |
+          rm -rf /tmp/merged && cp -r src-stock/ARC3-Inference /tmp/merged
+          cp -r src-patched/ARC3-Inference/* /tmp/merged/
+          PYTHONPATH=/tmp/merged python3 -m py_compile $(find /tmp/merged tests -name '*.py')
+          sed 's#src-patched/ARC3-Inference#/tmp/merged#' tests/test_analyzer_resolve.py > /tmp/test_resolve.py
+          PYTHONPATH=/tmp/merged python3 /tmp/test_resolve.py
